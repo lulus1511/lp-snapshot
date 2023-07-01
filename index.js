@@ -15,6 +15,7 @@ export default class LiquidPlayer extends Component {
         this.audioTrack = this.audioTrack.bind(this);
         this.play = this.play.bind(this);
         this._assignRoot = this._assignRoot.bind(this);
+        this._onSnapshot = this._onSnapshot.bind(this);
         this._onError = this._onError.bind(this);
         this._onProgress = this._onProgress.bind(this);
         this._onEnded = this._onEnded.bind(this);
@@ -65,7 +66,7 @@ export default class LiquidPlayer extends Component {
     }
 
     snapshot(path) {
-        this.setNativeProps({ snapshotPath: path });
+        this.setNativeProps({ snapshotPath: path});
     }
 
     play(paused) {
@@ -87,6 +88,12 @@ export default class LiquidPlayer extends Component {
     _onBuffering(event) {
         if (this.props.onBuffering) {
             this.props.onBuffering(event.nativeEvent);
+        }
+    }
+
+    _onSnapshot(event) {
+        if(this.props.onSnapshot){
+            this.props.onSnapshot(event.nativeEvent);
         }
     }
 
@@ -176,6 +183,7 @@ export default class LiquidPlayer extends Component {
                 style={[baseStyle, this.props.style]}
                 onVideoLoadStart={this._onLoadStart}
                 onVideoOpen={this._onOpen}
+                onVideoSnapshot={this._onSnapshot}
                 onVideoError={this._onError}
                 onVideoProgress={this._onProgress}
                 onVideoEnded={this._onEnded}
@@ -198,6 +206,7 @@ export default class LiquidPlayer extends Component {
                 scaleX={this.props.scaleX}
                 scaleY={this.props.scaleY}
                 onEnded={this.props.onEnded}
+                onSnapshot={this.props.onSnapshot}
                 onError={this.props.onError}
                 rotation={this.props.rotation}
                 onPaused={this.props.onPaused}
@@ -211,6 +220,8 @@ export default class LiquidPlayer extends Component {
                 onBuffering={this.props.onBuffering}
                 onLoadStart={this.props.onLoadStart}
                 snapshotPath={this.props.snapshotPath}
+                width={this.props.width}
+
                 disableFocus={this.props.disableFocus}
                 subtitleTrack={this.props.subtitleTrack}
                 autoAspectRatio={this.props.autoAspectRatio}
@@ -242,6 +253,7 @@ LiquidPlayer.propTypes = {
     repeat: PropTypes.bool,
     muted: PropTypes.bool,
     onVideoLoadStart: PropTypes.func,
+    onVideoSnapshot: PropTypes.func,
     onVideoError: PropTypes.func,
     onVideoProgress: PropTypes.func,
     onVideoEnded: PropTypes.func,
@@ -255,6 +267,7 @@ LiquidPlayer.propTypes = {
         uri: PropTypes.string,
         src: PropTypes.string,
     }), PropTypes.number]),
+    onSnapshot: PropTypes.func,
     onError: PropTypes.func,
     onProgress: PropTypes.func,
     onEnded: PropTypes.func,
