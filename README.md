@@ -131,3 +131,112 @@ Network protocols: FTP, HTTP, MMS, RSS/Atom, RTMP, RTP (unicast or multicast), R
 Network streaming formats: Apple HLS, Flash RTMP, MPEG-DASH, MPEG Transport Stream, RTP/RTSP ISMA/3GPP PSS, Windows Media MMS
 Subtitles: Advanced SubStation Alpha, Closed Captions, DVB, DVD-Video, MPEG-4 Timed Text, MPL2, OGM, SubStation Alpha, SubRip, SVCD, Teletext, Text file, VobSub, WebVTT, TTML
 Video coding formats: Cinepak, Dirac, DV, H.263, H.264/MPEG-4 AVC, H.265/MPEG HEVC, AV1, HuffYUV, Indeo 3, MJPEG, MPEG-1, MPEG-2, MPEG-4 Part 2, RealVideo 3&4, Sorenson, Theora, VC-1,[h] VP5, VP6, VP8, VP9, DNxHD, ProRes and some WMV.
+
+## Example use with react-native-fs
+- Path param req
+- Only PNG or JPEG
+- Can not overwrite existing file, you should use react-native-fs to managing files
+- May need set `<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />` in AndroidManifes.xml (propably only for external storage path)
+
+```
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ * @flow strict-local
+ */
+
+import React, {useRef, useState} from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+    Button,
+    Image
+} from 'react-native';
+
+import {
+  Colors,
+  Header,
+} from 'react-native/Libraries/NewAppScreen';
+import LiquidPlayer from 'liquid-player';
+import RNFS from 'react-native-fs'
+
+
+const App= () => {
+  const isDarkMode = useColorScheme() === 'dark';
+  const video = useRef();
+  const [path,setPath] = useState(null);
+
+  const backgroundStyle = {
+    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  };
+
+  return (
+    <SafeAreaView style={backgroundStyle}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={backgroundStyle.backgroundColor}
+      />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={backgroundStyle}>
+        <Header />
+        <View
+          style={{
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          }}>
+          <LiquidPlayer
+              ref={video}
+              style={{width: '100%', height: 400}}
+              videoAspectRatio="16:9"
+              onSnapshot={(e) => {
+                console.log(e.nativeEvent);
+                if(e.nativeEvent.isSuccess) {
+                  setPath(e.nativeEvent.path);
+                }
+                }
+          }
+              onError={(e) => console.log(e)}
+              paused={false}
+              source={{ uri: "rtsp://zephyr.rtsp.stream/movie?streamKey=0eb010a968a956a14b49101d43342bed"}}
+          />
+          <Button onPress={() => {
+            video.current.snapshot(RNFS.DocumentDirectoryPath + '/obraz.png');
+          }} title={"SnapShot!"} />
+        </View>
+        <Text>{path || 'nie ma patha'}</Text>
+        {path !== null &&
+        <Image source={{uri: 'file://' + path}} style={{width: '100%', height: 400}} />
+        }
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  sectionContainer: {
+    marginTop: 32,
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  sectionDescription: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '400',
+  },
+  highlight: {
+    fontWeight: '700',
+  },
+});
+
+export default App;
+```
