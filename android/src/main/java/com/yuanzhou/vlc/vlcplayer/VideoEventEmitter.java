@@ -75,6 +75,7 @@ class VideoEventEmitter {
     }
 
     private static final String EVENT_PROP_ERROR = "error";
+
     private static final String EVENT_PROP_ERROR_STRING = "errorString";
     private static final String EVENT_PROP_ERROR_EXCEPTION = "";
 
@@ -117,11 +118,14 @@ class VideoEventEmitter {
     /**
      * 截图回调
      * @param result
+     * @param path
      */
-    void onSnapshot(int result){
+    void onSnapshot(boolean result, String path){
         WritableMap map = Arguments.createMap();
-        map.putInt("isSuccess",result);
-        receiveEvent(EVENT_SNAPSHOT, map);
+        map.putBoolean("isSuccess",result);
+        map.putString("path", path);
+        Log.i("snapik", "poszed event z event emittera");
+        WritableMap event = Arguments.createMap();
     }
 
     /**
