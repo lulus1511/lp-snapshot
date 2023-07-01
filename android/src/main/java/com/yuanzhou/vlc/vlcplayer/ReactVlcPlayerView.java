@@ -2,12 +2,17 @@ package com.liquid.player.vlcplayer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.PixelCopy;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -26,6 +31,9 @@ import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -558,6 +566,23 @@ class ReactVlcPlayerView extends TextureView implements
         }
     }
 
+    private Bitmap.CompressFormat getFileType(String path){
+        int lastIndex = path.lastIndexOf(".");
+        if (lastIndex != -1 && lastIndex < path.length() - 1) {
+            String fileType = path.substring(lastIndex + 1);
+            switch(fileType){
+                case "jpeg": {
+                    return Bitmap.CompressFormat.JPEG;
+                }
+                default: {
+                    return Bitmap.CompressFormat.PNG;
+                }
+            }
+        }
+        return Bitmap.CompressFormat.PNG;
+    }
+
+
 
     /**
      * 截图
@@ -565,6 +590,43 @@ class ReactVlcPlayerView extends TextureView implements
      * @param path
      */
     public void doSnapshot(String path) {
+        Bitmap bitmap = Bitmap.createBitmap(mVideoWidth,mVideoHeight, Bitmap.Config.ARGB_8888);
+        try {
+            HandlerThread handlerThread = new HandlerThread("PixelCopier");
+            handlerThread.start();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                PixelCopy.request(surfaceVideo, bitmap, copyResult -> {
+                    if(copyResult == PixelCopy.SUCCESS){
+                        if (bitmap != null) {
+//                            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                            File file = new File(path);
+                            try (FileOutputStream outputStream = new FileOutputStream(file)) {
+                                bitmap.compress(getFileType(path), 100, outputStream);
+                                outputStream.flush();
+                                WritableMap map = Arguments.createMap();
+                                map.putBoolean("isSuccess",true);
+                                map.putString("path", path);
+                                eventEmitter.sendEvent(map, VideoEventEmitter.EVENT_SNAPSHOT);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                WritableMap map = Arguments.createMap();
+                                map.putBoolean("isSuccess",false);
+                                map.putString("path", path);
+                                eventEmitter.sendEvent(map, VideoEventEmitter.EVENT_SNAPSHOT);
+                            }
+                        }else{
+                            WritableMap map = Arguments.createMap();
+                            map.putBoolean("isSuccess",false);
+                            map.putString("path", path);
+                            eventEmitter.sendEvent(map, VideoEventEmitter.EVENT_SNAPSHOT);
+                        }
+                    }
+                    handlerThread.quitSafely();
+                }, new Handler(handlerThread.getLooper()));
+            }
+        } catch (IllegalArgumentException e){
+            e.printStackTrace();
+        }
         return;
     }
 
